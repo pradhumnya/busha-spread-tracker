@@ -363,52 +363,52 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
 <title>USDT/NGN &mdash; PrimeVault Rates</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
-  :root {{
+  :root {
     --fg: #1a1a1a; --bg: #fafafa; --muted: #6b6b6b; --line: #e6e6e6;
     --accent: #0b6e3a; --warn: #b8740a; --bad: #b3261e; --card: #fff;
-  }}
-  * {{ box-sizing: border-box; }}
-  body {{ margin: 0; font: 14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;
-         color: var(--fg); background: var(--bg); padding: 24px; }}
-  h1 {{ margin: 0 0 4px; font-size: 20px; font-weight: 600; }}
-  .sub {{ color: var(--muted); font-size: 13px; margin-bottom: 24px; }}
-  .cards {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-           gap: 12px; margin-bottom: 24px; }}
-  .card {{ background: var(--card); border: 1px solid var(--line); border-radius: 8px;
-          padding: 14px 16px; }}
-  .card .label {{ font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
-                 color: var(--muted); margin-bottom: 6px; }}
-  .card .value {{ font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }}
-  .card .footnote {{ color: var(--muted); font-size: 11px; margin-top: 4px; }}
-  .pos {{ color: var(--bad); }}
-  .neg {{ color: var(--accent); }}
-  .pills {{ margin-bottom: 16px; }}
-  .pill {{ display: inline-block; padding: 4px 12px; margin-right: 6px; border-radius: 20px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;
+         color: var(--fg); background: var(--bg); padding: 24px; }
+  h1 { margin: 0 0 4px; font-size: 20px; font-weight: 600; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+           gap: 12px; margin-bottom: 24px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+          padding: 14px 16px; }
+  .card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+                 color: var(--muted); margin-bottom: 6px; }
+  .card .value { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .card .footnote { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  .pos { color: var(--bad); }
+  .neg { color: var(--accent); }
+  .pills { margin-bottom: 16px; }
+  .pill { display: inline-block; padding: 4px 12px; margin-right: 6px; border-radius: 20px;
            border: 1px solid var(--line); background: var(--card); cursor: pointer;
-           font-size: 13px; font-weight: 500; color: var(--muted); }}
-  .pill.active {{ background: var(--accent); color: #fff; border-color: var(--accent); }}
-  .chart-wrap {{ background: var(--card); border: 1px solid var(--line); border-radius: 8px;
-                padding: 16px; margin-bottom: 24px; }}
-  .chart-wrap h2 {{ margin: 0 0 12px; font-size: 14px; font-weight: 600; color: var(--muted);
-                    text-transform: uppercase; letter-spacing: 0.04em; }}
-  table {{ width: 100%; border-collapse: collapse; background: var(--card);
-          border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }}
-  th, td {{ text-align: right; padding: 8px 12px; border-bottom: 1px solid var(--line);
-           font-variant-numeric: tabular-nums; }}
-  th {{ background: #f4f4f4; font-weight: 600; font-size: 12px; text-transform: uppercase;
-       letter-spacing: 0.04em; color: var(--muted); }}
-  th:first-child, td:first-child {{ text-align: left; }}
-  tr:last-child td {{ border-bottom: none; }}
-  tr.live td {{ background: #fff8e1; }}
-  .meta {{ color: var(--muted); font-size: 12px; margin-top: 16px; }}
-  .pulse {{ display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+           font-size: 13px; font-weight: 500; color: var(--muted); }
+  .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .chart-wrap { background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+                padding: 16px; margin-bottom: 24px; }
+  .chart-wrap h2 { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: var(--muted);
+                    text-transform: uppercase; letter-spacing: 0.04em; }
+  table { width: 100%; border-collapse: collapse; background: var(--card);
+          border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  th, td { text-align: right; padding: 8px 12px; border-bottom: 1px solid var(--line);
+           font-variant-numeric: tabular-nums; }
+  th { background: #f4f4f4; font-weight: 600; font-size: 12px; text-transform: uppercase;
+       letter-spacing: 0.04em; color: var(--muted); }
+  th:first-child, td:first-child { text-align: left; }
+  tr:last-child td { border-bottom: none; }
+  tr.live td { background: #fff8e1; }
+  .meta { color: var(--muted); font-size: 12px; margin-top: 16px; }
+  .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
            background: var(--accent); margin-right: 6px;
-           animation: pulse 2s ease-in-out infinite; }}
-  .pulse.stale {{ background: var(--bad); animation: none; }}
-  @keyframes pulse {{ 0%,100% {{opacity: 1;}} 50% {{opacity: 0.4;}} }}
-  .caveat {{ background: #fff8e1; border: 1px solid #f0e1a8; color: #6b4d00;
-            border-radius: 8px; padding: 10px 14px; font-size: 12px; margin-bottom: 16px; }}
-  .no-data {{ text-align: center; color: var(--muted); padding: 32px; font-size: 13px; }}
+           animation: pulse 2s ease-in-out infinite; }
+  .pulse.stale { background: var(--bad); animation: none; }
+  @keyframes pulse { 0%,100% {opacity: 1;} 50% {opacity: 0.4;} }
+  .caveat { background: #fff8e1; border: 1px solid #f0e1a8; color: #6b4d00;
+            border-radius: 8px; padding: 10px 14px; font-size: 12px; margin-bottom: 16px; }
+  .no-data { text-align: center; color: var(--muted); padding: 32px; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -481,51 +481,51 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
   <div class="meta" id="meta">&mdash;</div>
 
 <script>
-const fmt = (v, d=2) => v == null ? "&mdash;" : Number(v).toLocaleString(undefined, {{minimumFractionDigits: d, maximumFractionDigits: d}});
-const fmtTime = ts => {{
+const fmt = (v, d=2) => v == null ? "&mdash;" : Number(v).toLocaleString(undefined, {minimumFractionDigits: d, maximumFractionDigits: d});
+const fmtTime = ts => {
   if (!ts) return "&mdash;";
   const s = String(ts);
   return s.replace("T", " ").slice(0, 19);
-}};
+};
 const sign = v => v == null ? "" : (v > 0 ? "pos" : "neg");
 
 let _window = "24h";
 let ratesChart = null;
 let spreadChart = null;
 
-function windowToFrom(w) {{
+function windowToFrom(w) {
   const now = new Date();
-  if (w === "24h") {{
+  if (w === "24h") {
     const d = new Date(now - 24*60*60*1000);
     return d.toISOString();
-  }}
-  if (w === "7d") {{
+  }
+  if (w === "7d") {
     const d = new Date(now - 7*24*60*60*1000);
     return d.toISOString();
-  }}
-  if (w === "30d") {{
+  }
+  if (w === "30d") {
     const d = new Date(now - 30*24*60*60*1000);
     return d.toISOString();
-  }}
+  }
   return null; // all time
-}}
+}
 
-function setWindow(w) {{
+function setWindow(w) {
   _window = w;
-  document.querySelectorAll(".pill").forEach(p => {{
+  document.querySelectorAll(".pill").forEach(p => {
     p.classList.toggle("active", p.textContent.trim() === w || (w === "all" && p.textContent.trim() === "All time"));
-  }});
+  });
   tick();
-}}
+}
 
-function initCharts() {{
+function initCharts() {
   const rCtx = document.getElementById("ratesChart").getContext("2d");
-  ratesChart = new Chart(rCtx, {{
+  ratesChart = new Chart(rCtx, {
     type: "line",
-    data: {{
+    data: {
       labels: [],
       datasets: [
-        {{
+        {
           label: "PV Quoted Rate",
           data: [],
           borderColor: "#0b6e3a",
@@ -533,8 +533,8 @@ function initCharts() {{
           borderWidth: 2,
           pointRadius: 2,
           tension: 0.3,
-        }},
-        {{
+        },
+        {
           label: "Mid-Market Rate",
           data: [],
           borderColor: "#b8740a",
@@ -543,27 +543,27 @@ function initCharts() {{
           pointRadius: 2,
           tension: 0.3,
           borderDash: [4, 3],
-        }},
+        },
       ],
-    }},
-    options: {{
+    },
+    options: {
       responsive: true,
-      interaction: {{ mode: "index", intersect: false }},
-      plugins: {{ legend: {{ position: "top" }} }},
-      scales: {{
-        x: {{ ticks: {{ maxTicksLimit: 8, maxRotation: 0 }} }},
-        y: {{ ticks: {{ callback: v => Number(v).toLocaleString() }} }},
-      }},
-    }},
-  }});
+      interaction: { mode: "index", intersect: false },
+      plugins: { legend: { position: "top" } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+        y: { ticks: { callback: v => Number(v).toLocaleString() } },
+      },
+    },
+  });
 
   const sCtx = document.getElementById("spreadChart").getContext("2d");
-  spreadChart = new Chart(sCtx, {{
+  spreadChart = new Chart(sCtx, {
     type: "line",
-    data: {{
+    data: {
       labels: [],
       datasets: [
-        {{
+        {
           label: "Spread bps",
           data: [],
           borderColor: "#b3261e",
@@ -572,21 +572,21 @@ function initCharts() {{
           pointRadius: 2,
           tension: 0.3,
           fill: true,
-        }},
+        },
       ],
-    }},
-    options: {{
+    },
+    options: {
       responsive: true,
-      plugins: {{ legend: {{ display: false }} }},
-      scales: {{
-        x: {{ ticks: {{ maxTicksLimit: 8, maxRotation: 0 }} }},
-        y: {{ ticks: {{ callback: v => v + " bps" }} }},
-      }},
-    }},
-  }});
-}}
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+        y: { ticks: { callback: v => v + " bps" } },
+      },
+    },
+  });
+}
 
-function updateCharts(rows) {{
+function updateCharts(rows) {
   // rows are newest-first; reverse for chronological display
   const sorted = [...rows].reverse();
   const labels = sorted.map(r => fmtTime(r.fetched_at));
@@ -602,10 +602,10 @@ function updateCharts(rows) {{
   spreadChart.data.labels = labels;
   spreadChart.data.datasets[0].data = bps;
   spreadChart.update("none");
-}}
+}
 
-async function tick() {{
-  try {{
+async function tick() {
+  try {
     const fromTs = windowToFrom(_window);
     let histUrl = "/api/history?limit=500";
     if (fromTs) histUrl += "&from=" + encodeURIComponent(fromTs);
@@ -616,7 +616,7 @@ async function tick() {{
       fetch("/health").then(r => r.json()),
     ]);
 
-    if (latestRes) {{
+    if (latestRes) {
       document.getElementById("quoted").textContent = fmt(latestRes.quoted_rate, 4);
       document.getElementById("mid").textContent = fmt(latestRes.mid_market_rate, 4);
       const sp = document.getElementById("spread_pct");
@@ -630,26 +630,26 @@ async function tick() {{
       sb.className = sign(latestRes.spread_bps);
       document.getElementById("mid_source").textContent =
         "Mid-market: " + (latestRes.mid_market_source || "&mdash;");
-    }}
+    }
 
     const rows = (histRes && histRes.data) ? histRes.data : [];
     const tbody = document.getElementById("tbody");
-    if (rows.length === 0) {{
+    if (rows.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" class="no-data">No data yet for this window. Data updates hourly.</td></tr>';
       updateCharts([]);
-    }} else {{
+    } else {
       tbody.innerHTML = rows.slice(0, 30).map((r, i) => `
-        <tr class="${{i === 0 ? 'live' : ''}}">
-          <td>${{fmtTime(r.fetched_at)}}</td>
-          <td>${{fmt(r.quoted_rate, 4)}}</td>
-          <td>${{fmt(r.mid_market_rate, 4)}}</td>
-          <td class="${{sign(r.spread_abs)}}">${{fmt(r.spread_abs, 2)}}</td>
-          <td class="${{sign(r.spread_pct)}}">${{fmt(r.spread_pct, 2)}}%</td>
-          <td class="${{sign(r.spread_bps)}}">${{fmt(r.spread_bps, 0)}}</td>
+        <tr class="${i === 0 ? 'live' : ''}">
+          <td>${fmtTime(r.fetched_at)}</td>
+          <td>${fmt(r.quoted_rate, 4)}</td>
+          <td>${fmt(r.mid_market_rate, 4)}</td>
+          <td class="${sign(r.spread_abs)}">${fmt(r.spread_abs, 2)}</td>
+          <td class="${sign(r.spread_pct)}">${fmt(r.spread_pct, 2)}%</td>
+          <td class="${sign(r.spread_bps)}">${fmt(r.spread_bps, 0)}</td>
         </tr>
       `).join("");
       updateCharts(rows);
-    }}
+    }
 
     const stale = healthRes && healthRes.stale;
     document.getElementById("pulse").className = "pulse" + (stale ? " stale" : "");
@@ -661,11 +661,11 @@ async function tick() {{
       (stale ? " · STALE" : "");
     document.getElementById("meta").textContent =
       "Refreshes every 60s · data updates hourly";
-  }} catch (e) {{
+  } catch (e) {
     document.getElementById("status").textContent = "Connection error: " + e;
     document.getElementById("pulse").className = "pulse stale";
-  }}
-}}
+  }
+}
 
 initCharts();
 tick();
