@@ -37,10 +37,10 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], a
 
 @app.get("/", include_in_schema=False)
 def root():
-    return RedirectResponse("/dashboard")
+    return RedirectResponse("/ngn_usdt")
 
 
-@app.get("/dashboard", response_class=HTMLResponse)
+@app.get("/ngn_usdt", response_class=HTMLResponse)
 def dashboard():
     html = DASHBOARD_HTML_TEMPLATE.replace("__MARKUP_BPS__", str(int(_markup_bps)))
     return HTMLResponse(html)
