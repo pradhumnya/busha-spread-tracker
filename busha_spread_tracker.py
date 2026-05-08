@@ -416,8 +416,7 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
   <div class="sub"><span id="pulse" class="pulse"></span><span id="status">Connecting...</span></div>
 
   <div class="caveat">
-    Mid-market reference is the ECB-tracked USD/NGN rate (via Frankfurter/Open Exchange). USDT trades within
-    &plusmn;0.1% of USD, so this is used as the USDT/NGN mid-market proxy. Rates update hourly.
+    Mid-market reference is USD/NGN from open.er-api.com. USDT trades within &plusmn;0.1% of USD. Rates update hourly.
   </div>
 
   <div class="cards">
@@ -429,7 +428,7 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
     <div class="card">
       <div class="label">Mid-Market Rate</div>
       <div class="value"><span id="mid">&mdash;</span> <small style="font-size:13px;color:var(--muted)">NGN</small></div>
-      <div class="footnote" id="mid_source">Mid-market: &mdash;</div>
+      <div class="footnote" id="mid_source"></div>
     </div>
     <div class="card">
       <div class="label">Spread %</div>
@@ -469,7 +468,7 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
   <div class="meta" id="meta">—</div>
 
   <div class="chart-wrap" style="margin-top:24px">
-    <h2>Rates (NGN)</h2>
+    <h2>NGN/USDT Rates</h2>
     <canvas id="ratesChart" height="120"></canvas>
   </div>
 
@@ -626,8 +625,7 @@ async function tick() {
       const sb = document.getElementById("spread_bps");
       sb.textContent = fmt(latestRes.spread_bps, 0);
       sb.className = sign(latestRes.spread_bps);
-      document.getElementById("mid_source").textContent =
-        "Mid-market: " + (latestRes.mid_market_source || "—");
+      document.getElementById("mid_source").textContent = "";
     }
 
     const rows = (histRes && histRes.data) ? histRes.data : [];
@@ -658,7 +656,7 @@ async function tick() {
       (lastAt ? " · last updated " + fmtTime(lastAt) : "") +
       (stale ? " · STALE" : "");
     document.getElementById("meta").textContent =
-      "Refreshes every 60s · data updates hourly";
+      "";
   } catch (e) {
     document.getElementById("status").textContent = "Connection error: " + e;
     document.getElementById("pulse").className = "pulse stale";
