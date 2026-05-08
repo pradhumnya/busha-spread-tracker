@@ -1,3 +1,6 @@
-requests==2.32.4
-fastapi==0.136.1
-uvicorn==0.46.0
+requests
+fastapi
+uvicorn[standard]
+psycopg[binary,pool]
+gspread
+google-auth

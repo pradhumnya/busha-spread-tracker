@@ -1,11 +1,10 @@
 services:
   - type: web
-    name: busha-spread-tracker
-    runtime: python
+    name: primevault-rates
+    env: python
+    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: python busha_spread_tracker.py
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: MID_PROVIDER
-        value: open_er_api
-      - key: BUSHA_API_KEY
+      - key: DATABASE_URL
         sync: false
