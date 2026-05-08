@@ -71,7 +71,7 @@ def health():
 @app.get("/api/latest")
 def api_latest():
     assert _db is not None
-    rows = _db.execute_read("SELECT * FROM spread_snapshots ORDER BY fetched_ts_ms DESC LIMIT 1")
+    rows = _db.execute_read("SELECT * FROM spread_snapshots WHERE quoted_rate IS NOT NULL ORDER BY fetched_ts_ms DESC LIMIT 1")
     if not rows:
         raise HTTPException(404, "no snapshots yet")
     return rows[0]
@@ -84,14 +84,15 @@ def api_history(
     to: Optional[str] = Query(None),
 ):
     assert _db is not None
-    conditions, params = [], []
+    conditions = ["quoted_rate IS NOT NULL"]
+    params = []
     if from_:
         conditions.append("fetched_at >= %s")
         params.append(from_)
     if to:
         conditions.append("fetched_at <= %s")
         params.append(to)
-    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+    where = "WHERE " + " AND ".join(conditions)
     params.append(limit)
     rows = _db.execute_read(
         f"SELECT * FROM spread_snapshots {where} ORDER BY fetched_ts_ms DESC LIMIT %s",

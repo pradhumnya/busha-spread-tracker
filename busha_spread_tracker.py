@@ -447,6 +447,7 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
     <span class="pill" onclick="setWindow('7d')">7d</span>
     <span class="pill" onclick="setWindow('30d')">30d</span>
     <span class="pill" onclick="setWindow('all')">All time</span>
+    <span id="window_range" style="font-size:12px;color:var(--muted);margin-left:10px;line-height:30px;"></span>
   </div>
 
   <table>
@@ -512,6 +513,13 @@ function setWindow(w) {
   document.querySelectorAll(".pill").forEach(p => {
     p.classList.toggle("active", p.textContent.trim() === w || (w === "all" && p.textContent.trim() === "All time"));
   });
+  const from = windowToFrom(w);
+  const rangeEl = document.getElementById("window_range");
+  if (from) {
+    rangeEl.textContent = fmtTime(from) + " → now";
+  } else {
+    rangeEl.textContent = "All available data";
+  }
   tick();
 }
 
