@@ -416,10 +416,8 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
   <div class="sub"><span id="pulse" class="pulse"></span><span id="status">Connecting...</span></div>
 
   <div class="caveat">
-    Mid-market reference is the ECB-tracked USD/NGN rate (via Frankfurter). USDT trades within
+    Mid-market reference is the ECB-tracked USD/NGN rate (via Frankfurter/Open Exchange). USDT trades within
     &plusmn;0.1% of USD, so this is used as the USDT/NGN mid-market proxy. Rates update hourly.
-    The PrimeVault Quoted Rate shown is the all-in customer rate including a __MARKUP_BPS__bps
-    PrimeVault markup over the underlying partner network rate.
   </div>
 
   <div class="cards">
@@ -452,16 +450,6 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
     <span class="pill" onclick="setWindow('all')">All time</span>
   </div>
 
-  <div class="chart-wrap">
-    <h2>Rates (NGN)</h2>
-    <canvas id="ratesChart" height="120"></canvas>
-  </div>
-
-  <div class="chart-wrap">
-    <h2>Spread (bps)</h2>
-    <canvas id="spreadChart" height="80"></canvas>
-  </div>
-
   <table>
     <thead>
       <tr>
@@ -474,16 +462,26 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
       </tr>
     </thead>
     <tbody id="tbody">
-      <tr><td colspan="6" class="no-data">Loading&hellip;</td></tr>
+      <tr><td colspan="6" class="no-data">Loading&#x2026;</td></tr>
     </tbody>
   </table>
 
-  <div class="meta" id="meta">&mdash;</div>
+  <div class="meta" id="meta">—</div>
+
+  <div class="chart-wrap" style="margin-top:24px">
+    <h2>Rates (NGN)</h2>
+    <canvas id="ratesChart" height="120"></canvas>
+  </div>
+
+  <div class="chart-wrap">
+    <h2>Spread (bps)</h2>
+    <canvas id="spreadChart" height="80"></canvas>
+  </div>
 
 <script>
-const fmt = (v, d=2) => v == null ? "&mdash;" : Number(v).toLocaleString(undefined, {minimumFractionDigits: d, maximumFractionDigits: d});
+const fmt = (v, d=2) => v == null ? "—" : Number(v).toLocaleString(undefined, {minimumFractionDigits: d, maximumFractionDigits: d});
 const fmtTime = ts => {
-  if (!ts) return "&mdash;";
+  if (!ts) return "—";
   const s = String(ts);
   return s.replace("T", " ").slice(0, 19);
 };
@@ -629,7 +627,7 @@ async function tick() {
       sb.textContent = fmt(latestRes.spread_bps, 0);
       sb.className = sign(latestRes.spread_bps);
       document.getElementById("mid_source").textContent =
-        "Mid-market: " + (latestRes.mid_market_source || "&mdash;");
+        "Mid-market: " + (latestRes.mid_market_source || "—");
     }
 
     const rows = (histRes && histRes.data) ? histRes.data : [];
