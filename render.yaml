@@ -6,6 +6,6 @@ services:
     startCommand: python busha_spread_tracker.py
     envVars:
       - key: MID_PROVIDER
-        value: cbn
+        value: open_er_api
       - key: BUSHA_API_KEY
         sync: false
