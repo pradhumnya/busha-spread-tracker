@@ -17,5 +17,5 @@ jobs:
         env:
           BUSHA_API_KEY: ${{ secrets.BUSHA_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          MID_PROVIDER: frankfurter
+          MID_PROVIDER: open_er_api
           PV_MARKUP_BPS: '15'
