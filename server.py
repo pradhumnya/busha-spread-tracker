@@ -9,7 +9,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
 from busha_spread_tracker import (
     DEFAULT_MARKUP_BPS, DASHBOARD_HTML_TEMPLATE,
@@ -33,6 +33,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="PrimeVault USDT/NGN Rates", version="1.0.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return FileResponse("favicon.ico")
 
 
 @app.get("/", include_in_schema=False)

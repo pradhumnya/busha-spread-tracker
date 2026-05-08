@@ -361,6 +361,7 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>USDT/NGN &mdash; PrimeVault Rates</title>
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
   :root {
@@ -416,7 +417,8 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
   <div class="sub"><span id="pulse" class="pulse"></span><span id="status">Connecting...</span></div>
 
   <div class="caveat">
-    Mid-market reference is USD/NGN from open.er-api.com. USDT trades within &plusmn;0.1% of USD. Rates update hourly.
+    Rates shown are PrimeVault's quoted rates based on live pricing from our partner network, updated hourly.
+    Rates applied to actual transactions are determined at the time of execution and may differ.
   </div>
 
   <div class="cards">
@@ -454,8 +456,8 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
     <thead>
       <tr>
         <th>Timestamp (UTC)</th>
-        <th>PV Quoted Rate</th>
-        <th>Mid-Market Rate</th>
+        <th>PrimeVault Quoted Rate (NGN)</th>
+        <th>Mid-Market Rate (NGN)</th>
         <th>Spread (NGN)</th>
         <th>Spread %</th>
         <th>Spread bps</th>
@@ -531,7 +533,7 @@ function initCharts() {
       labels: [],
       datasets: [
         {
-          label: "PV Quoted Rate",
+          label: "PrimeVault Quoted Rate",
           data: [],
           borderColor: "#0b6e3a",
           backgroundColor: "rgba(11,110,58,0.08)",
@@ -657,11 +659,9 @@ async function tick() {
 
     const stale = healthRes && healthRes.stale;
     document.getElementById("pulse").className = "pulse" + (stale ? " stale" : "");
-    const snapCount = (healthRes && healthRes.snapshot_count != null) ? healthRes.snapshot_count : "?";
     const lastAt = (healthRes && healthRes.last_snapshot_at) ? healthRes.last_snapshot_at : null;
     document.getElementById("status").textContent =
-      snapCount + " snapshots" +
-      (lastAt ? " · last updated " + fmtTime(lastAt) : "") +
+      (lastAt ? "Last updated " + fmtTime(lastAt) : "No data yet") +
       (stale ? " · STALE" : "");
     document.getElementById("meta").textContent =
       "";
