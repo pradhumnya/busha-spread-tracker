@@ -515,13 +515,6 @@ function setWindow(w) {
   document.querySelectorAll(".pill").forEach(p => {
     p.classList.toggle("active", p.textContent.trim() === w || (w === "all" && p.textContent.trim() === "All time"));
   });
-  const from = windowToFrom(w);
-  const rangeEl = document.getElementById("window_range");
-  if (from) {
-    rangeEl.textContent = fmtTime(from) + " → now";
-  } else {
-    rangeEl.textContent = "All available data";
-  }
   tick();
 }
 
@@ -639,6 +632,14 @@ async function tick() {
     }
 
     const rows = (histRes && histRes.data) ? histRes.data : [];
+    const rangeEl = document.getElementById("window_range");
+    if (rows.length > 0) {
+      const oldest = rows[rows.length - 1].fetched_at;
+      const newest = rows[0].fetched_at;
+      rangeEl.textContent = fmtTime(oldest) + " → " + fmtTime(newest);
+    } else {
+      rangeEl.textContent = "No data in this window";
+    }
     const tbody = document.getElementById("tbody");
     if (rows.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" class="no-data">No data yet for this window. Data updates hourly.</td></tr>';
