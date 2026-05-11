@@ -1,7 +1,8 @@
 name: Hourly Rate Poll
 on:
   schedule:
-    - cron: '5 * * * *'
+    - cron: '5 * * * *'   # primary: 5 mins past every hour
+    - cron: '35 * * * *'  # backup: 35 mins past every hour (catches missed primary runs)
   workflow_dispatch:
 jobs:
   poll:
