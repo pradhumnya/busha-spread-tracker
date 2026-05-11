@@ -607,7 +607,7 @@ function updateCharts(rows) {
 async function tick() {
   try {
     const fromTs = windowToFrom(_window);
-    let histUrl = "/api/history?limit=500";
+    let histUrl = "/api/history?limit=1000";
     if (fromTs) histUrl += "&from=" + encodeURIComponent(fromTs);
 
     const [latestRes, histRes, healthRes] = await Promise.all([

@@ -85,10 +85,12 @@ def api_latest():
 
 @app.get("/api/history")
 def api_history(
-    limit: int = Query(500, gt=0, le=5000),
+    limit: int = Query(1000, gt=0, le=10000),
     from_: Optional[str] = Query(None, alias="from"),
     to: Optional[str] = Query(None),
 ):
+    """Return one row per hour (max quoted_rate for that hour) to avoid duplicates
+    from redundant cron triggers. Raw rows are preserved in the DB."""
     assert _db is not None
     conditions = ["quoted_rate IS NOT NULL"]
     params = []
@@ -101,7 +103,10 @@ def api_history(
     where = "WHERE " + " AND ".join(conditions)
     params.append(limit)
     rows = _db.execute_read(
-        f"SELECT * FROM spread_snapshots {where} ORDER BY fetched_ts_ms DESC LIMIT %s",
+        f"""SELECT DISTINCT ON (date_trunc('hour', fetched_at::timestamptz)) *
+            FROM spread_snapshots {where}
+            ORDER BY date_trunc('hour', fetched_at::timestamptz) DESC, quoted_rate DESC
+            LIMIT %s""",
         tuple(params),
     )
     return {"count": len(rows), "data": rows}
