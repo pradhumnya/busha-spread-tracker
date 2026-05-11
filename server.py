@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from busha_spread_tracker import (
     DEFAULT_MARKUP_BPS, DASHBOARD_HTML_TEMPLATE,
     make_database, init_db, Database,
+    BUSHA_PROD, BUSHA_SANDBOX, make_provider, SpreadPoller,
 )
 
 _db: Optional[Database] = None
@@ -152,6 +153,31 @@ def api_pairs():
                         "latest_mid_rate": latest.get("mid_market_rate"),
                         "latest_spread_bps": latest.get("spread_bps"),
                         "updated_at": latest.get("fetched_at")}]}
+
+
+@app.get("/run-poll")
+def run_poll(secret: str = Query(...)):
+    poll_secret = os.environ.get("POLL_SECRET", "")
+    if not poll_secret or secret != poll_secret:
+        raise HTTPException(403, "invalid secret")
+    assert _db is not None
+    env = os.environ.get("BUSHA_ENV", "prod")
+    busha_base = BUSHA_PROD if env == "prod" else BUSHA_SANDBOX
+    api_key = os.environ.get("BUSHA_API_KEY")
+    markup_bps = float(os.environ.get("PV_MARKUP_BPS", DEFAULT_MARKUP_BPS))
+    mid_provider = make_provider()
+    poller = SpreadPoller(
+        db=_db,
+        busha_base=busha_base,
+        busha_api_key=api_key,
+        provider=mid_provider,
+        markup_bps=markup_bps,
+    )
+    try:
+        snap = poller.poll_once()
+        return {"ok": True, "snapshot": snap}
+    except Exception as e:
+        raise HTTPException(500, f"poll failed: {e}")
 
 
 if __name__ == "__main__":
