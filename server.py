@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
@@ -46,9 +46,18 @@ def root():
     return RedirectResponse("/ngn_usdt")
 
 
+def _require_api_key(key: Optional[str] = Query(None)):
+    api_key = os.environ.get("POLL_SECRET", "")
+    if api_key and key != api_key:
+        raise HTTPException(403, "invalid or missing key")
+
+
 @app.get("/ngn_usdt", response_class=HTMLResponse)
 def dashboard():
-    html = DASHBOARD_HTML_TEMPLATE.replace("__MARKUP_BPS__", str(int(_markup_bps)))
+    api_key = os.environ.get("POLL_SECRET", "")
+    html = (DASHBOARD_HTML_TEMPLATE
+            .replace("__MARKUP_BPS__", str(int(_markup_bps)))
+            .replace("__API_KEY__", api_key))
     return HTMLResponse(html)
 
 
@@ -75,7 +84,7 @@ def health():
 
 
 @app.get("/api/latest")
-def api_latest():
+def api_latest(_: None = Depends(_require_api_key)):
     assert _db is not None
     rows = _db.execute_read("SELECT * FROM spread_snapshots WHERE quoted_rate IS NOT NULL ORDER BY fetched_ts_ms DESC LIMIT 1")
     if not rows:
@@ -88,6 +97,7 @@ def api_history(
     limit: int = Query(1000, gt=0, le=10000),
     from_: Optional[str] = Query(None, alias="from"),
     to: Optional[str] = Query(None),
+    _: None = Depends(_require_api_key),
 ):
     """Return one row per hour (max quoted_rate for that hour) to avoid duplicates
     from redundant cron triggers. Raw rows are preserved in the DB."""
@@ -113,7 +123,7 @@ def api_history(
 
 
 @app.get("/api/summary")
-def api_summary(window: str = Query("24h")):
+def api_summary(window: str = Query("24h"), _: None = Depends(_require_api_key)):
     assert _db is not None
     window_hours = {"24h": 24, "7d": 168, "30d": 720, "all": None}
     if window not in window_hours:
@@ -146,7 +156,7 @@ def api_summary(window: str = Query("24h")):
 
 
 @app.get("/api/pairs")
-def api_pairs():
+def api_pairs(_: None = Depends(_require_api_key)):
     assert _db is not None
     rows = _db.execute_read(
         "SELECT fetched_at, quoted_rate, mid_market_rate, spread_bps "

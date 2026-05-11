@@ -607,11 +607,12 @@ function updateCharts(rows) {
 async function tick() {
   try {
     const fromTs = windowToFrom(_window);
-    let histUrl = "/api/history?limit=1000";
+    const _ak = "__API_KEY__";
+    let histUrl = "/api/history?limit=1000&key=" + _ak;
     if (fromTs) histUrl += "&from=" + encodeURIComponent(fromTs);
 
     const [latestRes, histRes, healthRes] = await Promise.all([
-      fetch("/api/latest").then(r => r.ok ? r.json() : null),
+      fetch("/api/latest?key=" + _ak).then(r => r.ok ? r.json() : null),
       fetch(histUrl).then(r => r.json()),
       fetch("/health").then(r => r.json()),
     ]);
@@ -645,7 +646,7 @@ async function tick() {
       tbody.innerHTML = '<tr><td colspan="6" class="no-data">No data yet for this window. Data updates hourly.</td></tr>';
       updateCharts([]);
     } else {
-      tbody.innerHTML = rows.slice(0, 30).map((r, i) => `
+      tbody.innerHTML = rows.map((r, i) => `
         <tr class="${i === 0 ? 'live' : ''}">
           <td>${fmtTime(r.fetched_at)}</td>
           <td>${fmt(r.quoted_rate, 4)}</td>
