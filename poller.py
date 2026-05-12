@@ -29,9 +29,10 @@ def main() -> int:
         logging.error("DB init failed: %s", e)
         return 1
 
+    pair = os.environ.get("PAIR", "USDTNGN").upper()
     provider = make_provider()
     poller = SpreadPoller(db=db, busha_base=busha_base, busha_api_key=api_key,
-                          provider=provider, markup_bps=markup_bps)
+                          provider=provider, markup_bps=markup_bps, pair=pair)
     try:
         snap = poller.poll_once()
         logging.info("Poll complete: %s", snap)

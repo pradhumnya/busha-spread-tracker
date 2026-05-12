@@ -52,13 +52,23 @@ def _require_api_key(key: Optional[str] = Query(None)):
         raise HTTPException(403, "invalid or missing key")
 
 
-@app.get("/ngn_usdt", response_class=HTMLResponse)
-def dashboard():
+def _render_dashboard(pair: str, base: str) -> str:
     api_key = os.environ.get("POLL_SECRET", "")
-    html = (DASHBOARD_HTML_TEMPLATE
+    return (DASHBOARD_HTML_TEMPLATE
             .replace("__MARKUP_BPS__", str(int(_markup_bps)))
-            .replace("__API_KEY__", api_key))
-    return HTMLResponse(html)
+            .replace("__API_KEY__", api_key)
+            .replace("__PAIR__", pair)
+            .replace("__BASE__", base))
+
+
+@app.get("/ngn_usdt", response_class=HTMLResponse)
+def dashboard_usdt():
+    return HTMLResponse(_render_dashboard("USDTNGN", "USDT"))
+
+
+@app.get("/ngn_usdc", response_class=HTMLResponse)
+def dashboard_usdc():
+    return HTMLResponse(_render_dashboard("USDCNGN", "USDC"))
 
 
 @app.get("/health")
@@ -84,9 +94,12 @@ def health():
 
 
 @app.get("/api/latest")
-def api_latest(_: None = Depends(_require_api_key)):
+def api_latest(pair: str = Query("USDTNGN"), _: None = Depends(_require_api_key)):
     assert _db is not None
-    rows = _db.execute_read("SELECT * FROM spread_snapshots WHERE quoted_rate IS NOT NULL ORDER BY fetched_ts_ms DESC LIMIT 1")
+    rows = _db.execute_read(
+        "SELECT * FROM spread_snapshots WHERE quoted_rate IS NOT NULL AND pair = %s ORDER BY fetched_ts_ms DESC LIMIT 1",
+        (pair.upper(),),
+    )
     if not rows:
         raise HTTPException(404, "no snapshots yet")
     return rows[0]
@@ -97,13 +110,14 @@ def api_history(
     limit: int = Query(1000, gt=0, le=10000),
     from_: Optional[str] = Query(None, alias="from"),
     to: Optional[str] = Query(None),
+    pair: str = Query("USDTNGN"),
     _: None = Depends(_require_api_key),
 ):
     """Return one row per hour (max quoted_rate for that hour) to avoid duplicates
     from redundant cron triggers. Raw rows are preserved in the DB."""
     assert _db is not None
-    conditions = ["quoted_rate IS NOT NULL"]
-    params = []
+    conditions = ["quoted_rate IS NOT NULL", "pair = %s"]
+    params: list = [pair.upper()]
     if from_:
         conditions.append("fetched_at >= %s")
         params.append(from_)
@@ -123,14 +137,14 @@ def api_history(
 
 
 @app.get("/api/summary")
-def api_summary(window: str = Query("24h"), _: None = Depends(_require_api_key)):
+def api_summary(window: str = Query("24h"), pair: str = Query("USDTNGN"), _: None = Depends(_require_api_key)):
     assert _db is not None
     window_hours = {"24h": 24, "7d": 168, "30d": 720, "all": None}
     if window not in window_hours:
         raise HTTPException(400, f"window must be one of {list(window_hours)}")
     hours = window_hours[window]
-    params = []
-    base_where = "WHERE quoted_rate IS NOT NULL AND mid_market_rate IS NOT NULL"
+    params: list = [pair.upper()]
+    base_where = "WHERE quoted_rate IS NOT NULL AND mid_market_rate IS NOT NULL AND pair = %s"
     if hours:
         from_dt = datetime.now(timezone.utc) - timedelta(hours=hours)
         from_str = from_dt.isoformat(timespec="milliseconds").replace("+00:00", "Z")
@@ -158,20 +172,24 @@ def api_summary(window: str = Query("24h"), _: None = Depends(_require_api_key))
 @app.get("/api/pairs")
 def api_pairs(_: None = Depends(_require_api_key)):
     assert _db is not None
-    rows = _db.execute_read(
-        "SELECT fetched_at, quoted_rate, mid_market_rate, spread_bps "
-        "FROM spread_snapshots WHERE quoted_rate IS NOT NULL ORDER BY fetched_ts_ms DESC LIMIT 1"
-    )
-    latest = rows[0] if rows else {}
-    return {"pairs": [{"id": "USDTNGN", "base": "USDT", "counter": "NGN",
+    result = []
+    for pair_id, base in [("USDTNGN", "USDT"), ("USDCNGN", "USDC")]:
+        rows = _db.execute_read(
+            "SELECT fetched_at, quoted_rate, mid_market_rate, spread_bps "
+            "FROM spread_snapshots WHERE quoted_rate IS NOT NULL AND pair = %s ORDER BY fetched_ts_ms DESC LIMIT 1",
+            (pair_id,),
+        )
+        latest = rows[0] if rows else {}
+        result.append({"id": pair_id, "base": base, "counter": "NGN",
                         "latest_quoted_rate": latest.get("quoted_rate"),
                         "latest_mid_rate": latest.get("mid_market_rate"),
                         "latest_spread_bps": latest.get("spread_bps"),
-                        "updated_at": latest.get("fetched_at")}]}
+                        "updated_at": latest.get("fetched_at")})
+    return {"pairs": result}
 
 
 @app.get("/run-poll")
-def run_poll(secret: str = Query(...)):
+def run_poll(secret: str = Query(...), pair: str = Query("USDTNGN")):
     poll_secret = os.environ.get("POLL_SECRET", "")
     if not poll_secret or secret != poll_secret:
         raise HTTPException(403, "invalid secret")
@@ -187,10 +205,11 @@ def run_poll(secret: str = Query(...)):
         busha_api_key=api_key,
         provider=mid_provider,
         markup_bps=markup_bps,
+        pair=pair.upper(),
     )
     try:
         snap = poller.poll_once()
-        return {"ok": True, "snapshot": snap}
+        return {"ok": True, "pair": pair.upper(), "snapshot": snap}
     except Exception as e:
         raise HTTPException(500, f"poll failed: {e}")
 

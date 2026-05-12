@@ -7,16 +7,26 @@ on:
 jobs:
   poll:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - run: pip install -r requirements.txt
-      - run: python poller.py
+      - name: Poll USDT/NGN
+        run: python poller.py
         env:
           BUSHA_API_KEY: ${{ secrets.BUSHA_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           MID_PROVIDER: open_er_api
           PV_MARKUP_BPS: '15'
+          PAIR: USDTNGN
+      - name: Poll USDC/NGN
+        run: python poller.py
+        env:
+          BUSHA_API_KEY: ${{ secrets.BUSHA_API_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          MID_PROVIDER: open_er_api
+          PV_MARKUP_BPS: '15'
+          PAIR: USDCNGN
