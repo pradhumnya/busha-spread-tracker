@@ -486,7 +486,7 @@ DASHBOARD_HTML_TEMPLATE = """<!doctype html>
   <div class="table-footer" id="table-footer"></div>
 
   <div class="chart-wrap" style="margin-top:24px">
-    <h2>NGN/USDT Rates</h2>
+    <h2>NGN/__BASE__ Rates</h2>
     <canvas id="ratesChart" height="120"></canvas>
   </div>
 
