@@ -250,9 +250,11 @@ class SpreadPoller:
             return None
 
     def fetch_busha(self) -> Optional[float]:
+        base_token = self.pair[:-3]   # "USDT" or "USDC"
+        counter_token = self.pair[-3:]  # "NGN"
         try:
             r = self.session.get(f"{self.busha_base}/v1/pairs",
-                                  params={"base": "USDT", "counter": "NGN"}, timeout=HTTP_TIMEOUT)
+                                  params={"base": base_token, "counter": counter_token}, timeout=HTTP_TIMEOUT)
             r.raise_for_status()
             body = r.json()
             for p in (body.get("data") or []):
