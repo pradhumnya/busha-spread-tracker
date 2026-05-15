@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
@@ -188,11 +188,8 @@ def api_pairs(_: None = Depends(_require_api_key)):
     return {"pairs": result}
 
 
-@app.get("/run-poll")
-def run_poll(secret: str = Query(...), pair: str = Query("USDTNGN")):
-    poll_secret = os.environ.get("POLL_SECRET", "")
-    if not poll_secret or secret != poll_secret:
-        raise HTTPException(403, "invalid secret")
+def _do_poll(pair: str) -> None:
+    """Run in background so /run-poll returns instantly to the caller."""
     assert _db is not None
     env = os.environ.get("BUSHA_ENV", "prod")
     busha_base = BUSHA_PROD if env == "prod" else BUSHA_SANDBOX
@@ -205,13 +202,22 @@ def run_poll(secret: str = Query(...), pair: str = Query("USDTNGN")):
         busha_api_key=api_key,
         provider=mid_provider,
         markup_bps=markup_bps,
-        pair=pair.upper(),
+        pair=pair,
     )
     try:
         snap = poller.poll_once()
-        return {"ok": True, "pair": pair.upper(), "snapshot": snap}
+        logging.info("Background poll complete [%s]: %s", pair, snap)
     except Exception as e:
-        raise HTTPException(500, f"poll failed: {e}")
+        logging.error("Background poll failed [%s]: %s", pair, e)
+
+
+@app.get("/run-poll")
+def run_poll(background_tasks: BackgroundTasks, secret: str = Query(...), pair: str = Query("USDTNGN")):
+    poll_secret = os.environ.get("POLL_SECRET", "")
+    if not poll_secret or secret != poll_secret:
+        raise HTTPException(403, "invalid secret")
+    background_tasks.add_task(_do_poll, pair.upper())
+    return {"ok": True, "pair": pair.upper(), "status": "poll queued"}
 
 
 if __name__ == "__main__":
