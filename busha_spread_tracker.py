@@ -604,12 +604,13 @@ async function tick() {
     let histUrl = "/api/history?limit=1000&key=" + _ak + "&pair=" + _pair;
     if (fromTs) histUrl += "&from=" + encodeURIComponent(fromTs);
 
-    const [latestRes, histRes, healthRes] = await Promise.all([
-      fetch("/api/latest?key=" + _ak + "&pair=" + _pair).then(r => r.ok ? r.json() : null),
+    const [histRes, healthRes] = await Promise.all([
       fetch(histUrl).then(r => r.json()),
       fetch("/health").then(r => r.json()),
     ]);
 
+    // Top cards always use the same row as the first table entry (max rate for latest hour)
+    const latestRes = (histRes && histRes.data && histRes.data.length > 0) ? histRes.data[0] : null;
     if (latestRes) {
       document.getElementById("quoted").textContent = fmt(latestRes.quoted_rate, 4);
       document.getElementById("mid").textContent = fmt(latestRes.mid_market_rate, 4);
