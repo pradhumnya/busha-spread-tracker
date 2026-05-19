@@ -604,9 +604,10 @@ async function tick() {
     let histUrl = "/api/history?limit=1000&key=" + _ak + "&pair=" + _pair;
     if (fromTs) histUrl += "&from=" + encodeURIComponent(fromTs);
 
+    const safeJson = r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status));
     const [histRes, healthRes] = await Promise.all([
-      fetch(histUrl).then(r => r.json()),
-      fetch("/health").then(r => r.json()),
+      fetch(histUrl).then(safeJson),
+      fetch("/health").then(safeJson),
     ]);
 
     // Top cards always use the same row as the first table entry (max rate for latest hour)
@@ -667,8 +668,9 @@ async function tick() {
       (lastAt ? "Last updated " + fmtTime(lastAt) : "No data yet") +
       (stale ? " · STALE" : "");
   } catch (e) {
-    document.getElementById("status").textContent = "Connection error: " + e;
+    document.getElementById("status").textContent = "Waking up… retrying in 10s";
     document.getElementById("pulse").className = "pulse stale";
+    setTimeout(tick, 10000);
   }
 }
 
