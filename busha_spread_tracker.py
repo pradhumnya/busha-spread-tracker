@@ -138,13 +138,12 @@ class Database:
             url,
             min_size=1,
             max_size=3,
-            open=True,
+            open=False,  # don't block startup if DB is temporarily unreachable
             reconnect_timeout=120,
             reconnect_failed=lambda pool: logging.error("DB reconnect failed after 120s"),
             kwargs={"connect_timeout": 30, "sslmode": "require"},
         )
-        with self._pool.connection() as conn:
-            conn.execute("SELECT 1")
+        self._pool.open(wait=False)  # connect in background; server starts regardless
         try:
             from urllib.parse import urlparse
             self._host = urlparse(url).hostname or "unknown"
