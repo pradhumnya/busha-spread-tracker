@@ -139,9 +139,9 @@ class Database:
             min_size=1,
             max_size=3,
             open=True,
-            reconnect_timeout=30,
-            reconnect_failed=lambda pool: logging.error("DB reconnect failed — pool exhausted"),
-            kwargs={"connect_timeout": 10},
+            reconnect_timeout=120,
+            reconnect_failed=lambda pool: logging.error("DB reconnect failed after 120s"),
+            kwargs={"connect_timeout": 30, "sslmode": "require"},
         )
         with self._pool.connection() as conn:
             conn.execute("SELECT 1")
