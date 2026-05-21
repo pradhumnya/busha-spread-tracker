@@ -141,7 +141,7 @@ class Database:
             open=False,  # don't block startup if DB is temporarily unreachable
             reconnect_timeout=120,
             reconnect_failed=lambda pool: logging.error("DB reconnect failed after 120s"),
-            kwargs={"connect_timeout": 30, "sslmode": "require"},
+            kwargs={"connect_timeout": 30, "sslmode": "require", "prepare_threshold": 0},
         )
         self._pool.open(wait=False)  # connect in background; server starts regardless
         try:
@@ -612,25 +612,27 @@ async function tick() {
     if (fromTs) histUrl += "&from=" + encodeURIComponent(fromTs);
 
     const safeJson = r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status));
-    const [histRes, healthRes] = await Promise.all([
+    // Top cards always fetch the single most recent hourly entry, ignoring the window filter
+    const latestUrl = "/api/history?limit=1&key=" + _ak + "&pair=" + _pair;
+    const [histRes, latestRes, healthRes] = await Promise.all([
       fetch(histUrl).then(safeJson),
+      fetch(latestUrl).then(safeJson),
       fetch("/health").then(safeJson),
     ]);
 
-    // Top cards always use the same row as the first table entry (max rate for latest hour)
-    const latestRes = (histRes && histRes.data && histRes.data.length > 0) ? histRes.data[0] : null;
-    if (latestRes) {
-      document.getElementById("quoted").textContent = fmt(latestRes.quoted_rate, 4);
-      document.getElementById("mid").textContent = fmt(latestRes.mid_market_rate, 4);
+    const latestRow = (latestRes && latestRes.data && latestRes.data.length > 0) ? latestRes.data[0] : null;
+    if (latestRow) {
+      document.getElementById("quoted").textContent = fmt(latestRow.quoted_rate, 4);
+      document.getElementById("mid").textContent = fmt(latestRow.mid_market_rate, 4);
       const sp = document.getElementById("spread_pct");
-      sp.textContent = fmt(latestRes.spread_pct, 2);
-      sp.className = sign(latestRes.spread_pct);
+      sp.textContent = fmt(latestRow.spread_pct, 2);
+      sp.className = sign(latestRow.spread_pct);
       const sa = document.getElementById("spread_abs");
-      sa.textContent = fmt(latestRes.spread_abs, 2);
-      sa.className = sign(latestRes.spread_abs);
+      sa.textContent = fmt(latestRow.spread_abs, 2);
+      sa.className = sign(latestRow.spread_abs);
       const sb = document.getElementById("spread_bps");
-      sb.textContent = fmt(latestRes.spread_bps, 0);
-      sb.className = sign(latestRes.spread_bps);
+      sb.textContent = fmt(latestRow.spread_bps, 0);
+      sb.className = sign(latestRow.spread_bps);
       document.getElementById("mid_source").textContent = "";
     }
 
