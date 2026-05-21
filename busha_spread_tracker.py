@@ -134,7 +134,15 @@ class Database:
 
     def __init__(self, url: str):
         from psycopg_pool import ConnectionPool
-        self._pool = ConnectionPool(url, min_size=1, max_size=3, open=True)
+        self._pool = ConnectionPool(
+            url,
+            min_size=1,
+            max_size=3,
+            open=True,
+            reconnect_timeout=30,
+            reconnect_failed=lambda pool: logging.error("DB reconnect failed — pool exhausted"),
+            kwargs={"connect_timeout": 10},
+        )
         with self._pool.connection() as conn:
             conn.execute("SELECT 1")
         try:
