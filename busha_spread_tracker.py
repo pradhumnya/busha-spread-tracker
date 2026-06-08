@@ -135,6 +135,10 @@ class Database:
 
     def __init__(self, url: str):
         from psycopg_pool import ConnectionPool
+        def _configure(conn) -> None:
+            # Disable prepared statements — required for PgBouncer transaction pooling mode
+            conn.prepare_threshold = 0
+
         self._pool = ConnectionPool(
             url,
             min_size=1,
@@ -142,7 +146,8 @@ class Database:
             open=False,  # don't block startup if DB is temporarily unreachable
             reconnect_timeout=120,
             reconnect_failed=lambda pool: logging.error("DB reconnect failed after 120s"),
-            kwargs={"connect_timeout": 30, "sslmode": "require", "prepare_threshold": 0},
+            kwargs={"connect_timeout": 30, "sslmode": "require"},
+            configure=_configure,
         )
         self._pool.open(wait=False)  # connect in background; server starts regardless
         try:
