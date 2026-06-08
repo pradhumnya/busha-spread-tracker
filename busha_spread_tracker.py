@@ -71,16 +71,19 @@ class FrankfurterProvider(MidMarketProvider):
 
 class OpenErApiProvider(MidMarketProvider):
     """open.er-api.com — free, no auth, hourly-ish updates."""
-    name = "open.er-api.com (free, retail composite — not true mid-market)"
     URL = "https://open.er-api.com/v6/latest/USD"
+
+    def __init__(self, counter_currency: str = "NGN"):
+        self.counter_currency = counter_currency.upper()
+        self.name = f"open.er-api.com (free, retail composite — not true mid-market)"
 
     def fetch(self, session: requests.Session) -> float:
         r = session.get(self.URL, timeout=HTTP_TIMEOUT)
         r.raise_for_status()
         data = r.json()
-        rate = data.get("rates", {}).get("NGN")
+        rate = data.get("rates", {}).get(self.counter_currency)
         if rate is None:
-            raise RuntimeError(f"NGN missing from open.er-api response: {data}")
+            raise RuntimeError(f"{self.counter_currency} missing from open.er-api response: {data}")
         return float(rate)
 
 
@@ -110,12 +113,12 @@ class StaticProvider(MidMarketProvider):
         return self._rate
 
 
-def make_provider() -> MidMarketProvider:
+def make_provider(counter_currency: str = "NGN") -> MidMarketProvider:
     kind = os.environ.get("MID_PROVIDER", "frankfurter").lower()
     if kind == "frankfurter":
         return FrankfurterProvider()
     if kind == "open_er_api":
-        return OpenErApiProvider()
+        return OpenErApiProvider(counter_currency=counter_currency)
     if kind == "cbn":
         return CBNProvider()
     if kind == "static":
@@ -136,8 +139,9 @@ class Database:
     def __init__(self, url: str):
         from psycopg_pool import ConnectionPool
         def _configure(conn) -> None:
-            # Disable prepared statements — required for PgBouncer transaction pooling mode
-            conn.prepare_threshold = 0
+            # None = never use prepared statements (required for PgBouncer transaction pooling)
+            # 0 = prepare on first use (WRONG — would still crash PgBouncer)
+            conn.prepare_threshold = None
 
         self._pool = ConnectionPool(
             url,
@@ -159,16 +163,19 @@ class Database:
 
     def execute_write(self, sql: str, params: tuple = ()) -> None:
         with self._pool.connection() as conn:
+            conn.prepare_threshold = None
             conn.execute(sql, params)
 
     def execute_read(self, sql: str, params: tuple = ()) -> list[dict]:
         with self._pool.connection() as conn:
+            conn.prepare_threshold = None
             cur = conn.execute(sql, params)
             cols = [desc[0] for desc in cur.description]
             return [dict(zip(cols, row)) for row in cur.fetchall()]
 
     def execute_script(self, statements: list[str]) -> None:
         with self._pool.connection() as conn:
+            conn.prepare_threshold = None
             for stmt in statements:
                 stmt = stmt.strip()
                 if stmt:

@@ -34,7 +34,8 @@ def main() -> int:
         "PV_KES_MARKUP_BPS" if pair.endswith("KES") else "PV_MARKUP_BPS",
         DEFAULT_KES_MARKUP_BPS if pair.endswith("KES") else DEFAULT_MARKUP_BPS,
     ))
-    provider = make_provider()
+    counter = pair[-3:]  # "NGN" or "KES"
+    provider = make_provider(counter_currency=counter)
     poller = SpreadPoller(db=db, busha_base=busha_base, busha_api_key=api_key,
                           provider=provider, markup_bps=markup_bps, pair=pair)
     try:

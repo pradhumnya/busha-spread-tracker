@@ -306,7 +306,8 @@ def _do_poll(pair: str) -> None:
         markup_bps = float(os.environ.get("PV_KES_MARKUP_BPS", DEFAULT_KES_MARKUP_BPS))
     else:
         markup_bps = float(os.environ.get("PV_MARKUP_BPS", DEFAULT_MARKUP_BPS))
-    mid_provider = make_provider()
+    counter = pair[-3:]  # "NGN" or "KES"
+    mid_provider = make_provider(counter_currency=counter)
     poller = SpreadPoller(
         db=_db,
         busha_base=busha_base,
