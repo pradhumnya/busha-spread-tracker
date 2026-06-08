@@ -30,6 +30,7 @@ DEFAULT_MID_REFRESH = 3600.0     # mid-market refresh (1 hour)
 DEFAULT_SHEETS_PUSH = 3600.0     # Google Sheets push (1 hour)
 DEFAULT_DB_PATH = "busha_spread.db"
 DEFAULT_MARKUP_BPS = 15.0
+DEFAULT_KES_MARKUP_BPS = 20.0
 HTTP_TIMEOUT = 10.0
 
 # ---------------------------------------------------------------------------
@@ -231,6 +232,35 @@ def init_db(db: Database) -> None:
     db.execute_script(_SCHEMA_STATEMENTS)
 
 
+_KES_SCHEMA_STATEMENTS = [
+    """CREATE TABLE IF NOT EXISTS spread_snapshots_kes (
+        id                  BIGSERIAL PRIMARY KEY,
+        fetched_at          TEXT             NOT NULL,
+        fetched_ts_ms       BIGINT           NOT NULL,
+        busha_rate          DOUBLE PRECISION,
+        markup_bps          DOUBLE PRECISION,
+        markup_amount       DOUBLE PRECISION,
+        quoted_rate         DOUBLE PRECISION,
+        quoted_source       TEXT             NOT NULL,
+        mid_market_rate     DOUBLE PRECISION,
+        mid_market_source   TEXT             NOT NULL,
+        mid_market_age_sec  INTEGER,
+        spread_abs          DOUBLE PRECISION,
+        spread_pct          DOUBLE PRECISION,
+        spread_bps          DOUBLE PRECISION,
+        pair                TEXT             NOT NULL DEFAULT 'USDTKES'
+    )""",
+    """CREATE INDEX IF NOT EXISTS idx_spread_snapshots_kes_ts
+        ON spread_snapshots_kes(fetched_ts_ms DESC)""",
+    """CREATE INDEX IF NOT EXISTS idx_spread_snapshots_kes_pair
+        ON spread_snapshots_kes(pair)""",
+]
+
+
+def init_kes_db(db: Database) -> None:
+    db.execute_script(_KES_SCHEMA_STATEMENTS)
+
+
 # ---------------------------------------------------------------------------
 # SpreadPoller — one-shot (not a Thread)
 # ---------------------------------------------------------------------------
@@ -242,6 +272,7 @@ class SpreadPoller:
         self.provider = provider
         self.markup_bps = markup_bps
         self.pair = pair.upper()
+        self.table = "spread_snapshots_kes" if self.pair.endswith("KES") else "spread_snapshots"
         self.session = requests.Session()
         self.session.headers.update({"Accept": "application/json", "User-Agent": "busha-spread-tracker/1.0"})
         if busha_api_key:
@@ -292,7 +323,7 @@ class SpreadPoller:
         base = self.pair.replace("NGN", "")   # "USDT" or "USDC"
         quoted_source = f"PrimeVault Partner Network ({base}/NGN)"
         self.db.execute_write(
-            """INSERT INTO spread_snapshots
+            f"""INSERT INTO {self.table}
                (fetched_at, fetched_ts_ms, busha_rate, markup_bps, markup_amount,
                 quoted_rate, quoted_source, mid_market_rate, mid_market_source,
                 mid_market_age_sec, spread_abs, spread_pct, spread_bps, pair)
@@ -606,14 +637,15 @@ function updateCharts(rows, w) {
 async function tick() {
   try {
     const fromTs = windowToFrom(_window);
-    const _ak   = "__API_KEY__";
-    const _pair = "__PAIR__";
-    let histUrl = "/api/history?limit=1000&key=" + _ak + "&pair=" + _pair;
+    const _ak         = "__API_KEY__";
+    const _pair       = "__PAIR__";
+    const _apiPrefix  = "__API_PREFIX__";
+    let histUrl = _apiPrefix + "/history?limit=1000&key=" + _ak + "&pair=" + _pair;
     if (fromTs) histUrl += "&from=" + encodeURIComponent(fromTs);
 
     const safeJson = r => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status));
     // Top cards always fetch the single most recent hourly entry, ignoring the window filter
-    const latestUrl = "/api/history?limit=1&key=" + _ak + "&pair=" + _pair;
+    const latestUrl = _apiPrefix + "/history?limit=1&key=" + _ak + "&pair=" + _pair;
     const [histRes, latestRes, healthRes] = await Promise.all([
       fetch(histUrl).then(safeJson),
       fetch(latestUrl).then(safeJson),

@@ -8,8 +8,8 @@ import os
 import sys
 
 from busha_spread_tracker import (
-    BUSHA_PROD, BUSHA_SANDBOX, DEFAULT_MARKUP_BPS,
-    make_provider, make_database, init_db, SpreadPoller, push_to_sheets_once,
+    BUSHA_PROD, BUSHA_SANDBOX, DEFAULT_MARKUP_BPS, DEFAULT_KES_MARKUP_BPS,
+    make_provider, make_database, init_db, init_kes_db, SpreadPoller, push_to_sheets_once,
 )
 
 
@@ -18,11 +18,11 @@ def main() -> int:
     env = os.environ.get("BUSHA_ENV", "prod")
     busha_base = BUSHA_PROD if env == "prod" else BUSHA_SANDBOX
     api_key = os.environ.get("BUSHA_API_KEY")
-    markup_bps = float(os.environ.get("PV_MARKUP_BPS", DEFAULT_MARKUP_BPS))
 
     try:
         db = make_database()
         init_db(db)
+        init_kes_db(db)
     except SystemExit:
         raise
     except Exception as e:
@@ -30,6 +30,10 @@ def main() -> int:
         return 1
 
     pair = os.environ.get("PAIR", "USDTNGN").upper()
+    markup_bps = float(os.environ.get(
+        "PV_KES_MARKUP_BPS" if pair.endswith("KES") else "PV_MARKUP_BPS",
+        DEFAULT_KES_MARKUP_BPS if pair.endswith("KES") else DEFAULT_MARKUP_BPS,
+    ))
     provider = make_provider()
     poller = SpreadPoller(db=db, busha_base=busha_base, busha_api_key=api_key,
                           provider=provider, markup_bps=markup_bps, pair=pair)
