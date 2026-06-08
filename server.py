@@ -54,7 +54,7 @@ def _require_api_key(key: Optional[str] = Query(None)):
         raise HTTPException(403, "invalid or missing key")
 
 
-def _render_dashboard(pair: str, base: str, api_prefix: str = "/api", markup_bps: float = None) -> str:
+def _render_dashboard(pair: str, base: str, counter: str, api_prefix: str = "/api", markup_bps: float = None) -> str:
     if markup_bps is None:
         markup_bps = _markup_bps
     api_key = os.environ.get("POLL_SECRET", "")
@@ -63,27 +63,28 @@ def _render_dashboard(pair: str, base: str, api_prefix: str = "/api", markup_bps
             .replace("__API_KEY__", api_key)
             .replace("__PAIR__", pair)
             .replace("__BASE__", base)
+            .replace("__COUNTER__", counter)
             .replace("__API_PREFIX__", api_prefix))
 
 
 @app.get("/ngn_usdt", response_class=HTMLResponse)
 def dashboard_ngn_usdt():
-    return HTMLResponse(_render_dashboard("USDTNGN", "USDT", "/api", _markup_bps))
+    return HTMLResponse(_render_dashboard("USDTNGN", "USDT", "NGN", "/api", _markup_bps))
 
 
 @app.get("/ngn_usdc", response_class=HTMLResponse)
 def dashboard_ngn_usdc():
-    return HTMLResponse(_render_dashboard("USDCNGN", "USDC", "/api", _markup_bps))
+    return HTMLResponse(_render_dashboard("USDCNGN", "USDC", "NGN", "/api", _markup_bps))
 
 
 @app.get("/kes_usdt", response_class=HTMLResponse)
 def dashboard_kes_usdt():
-    return HTMLResponse(_render_dashboard("USDTKES", "USDT", "/api/kes", _kes_markup_bps))
+    return HTMLResponse(_render_dashboard("USDTKES", "USDT", "KES", "/api/kes", _kes_markup_bps))
 
 
 @app.get("/kes_usdc", response_class=HTMLResponse)
 def dashboard_kes_usdc():
-    return HTMLResponse(_render_dashboard("USDCKES", "USDC", "/api/kes", _kes_markup_bps))
+    return HTMLResponse(_render_dashboard("USDCKES", "USDC", "KES", "/api/kes", _kes_markup_bps))
 
 
 @app.get("/health")
